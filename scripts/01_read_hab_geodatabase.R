@@ -1,38 +1,63 @@
-#require(rgdal)
 library(sf)
 library(sp)
 library(tidyverse)
 library(data.table)
 library(cowplot)
+library(units)
 
-getwd()
 
-#F:\copy_data\Marine_Evidence_Base_Internal.gdb
-#read in geodatabase (it is large, so will take a couple of minutes) - ALL of UK
-fgdb <- try(st_read(dsn="D:/projects/fishing_displacement/2_subprojects_and_data/2_GIS_DATA/Marine habitat/Marine_Evidence_Base_Internal.gdb", layer = "Input_BSH_Polys_WGS84_Internal", geometry_column = NULL))#(dsn="F:/copy_data/Marine_Evidence_Base_Internal.gdb", layer = "Input_BSH_Polys_WGS84_Internal"))
-if("try-error" %in% fgdb) {
-  file.choose()
-}
+# Define gis input for habitat map(s)
+input_habitat_map <- "F:\\projects\\offshore_sensitivity\\marine_offshore_sensitivity\\outputs\\habitat_sensitivity_fishing_sbgr_no_biotope_filter.GPKG"
+#GIS data for output non-sbgr filter - as it contains habitat info and should be correct otherwise for this calculation: "F:\\projects\\offshore_sensitivity\\marine_offshore_sensitivity\\outputs\\habitat_sensitivity_fishing_sbgr_no_biotope_filter.GPKG"
 
+# Run this to see the available layers in the gis file
+sf::st_layers(input_habitat_map)
+# Now supply the layer name that you are interest in
+offshore_layer <- "offshore_sens"
+inshore_layer <- "inshore_sens"
+
+# now read the data in
+inshore <- sf::st_read(dsn=input_habitat_map, layer = inshore_layer)
+offshore <- sf::st_read(dsn=input_habitat_map, layer = offshore_layer)
 #or for English seas -> 12 NM waters
 #fgdb <- st_read(dsn="D:/projects/fishing_displacement/2_subprojects_and_data/2_GIS_DATA/Marine habitat/Phil_Fish_Project.gdb", layer = "Input_BSH_Polys_WGS84_Internal_Selection_Clip")
 
-names(fgdb)
-#names(fgdb)
+offshore <- offshore %>% dplyr::select(HAB_TYPE, hab.1, hab.2, hab.3, bgr_subreg_id, level, geom)
+inshore <- inshore %>% dplyr::select(HAB_TYPE, hab.1, hab.2, hab.3, bgr_subreg_id, level, geom)
 
-# isolate the fields of interest, to make the data frame smaller
-hab.type.dat <- fgdb %>% select(HAB_TYPE, Shape_Area)
+#add inshore_offshore_marker_prior to merge
+offshore$zone <- "offshore"
+inshore$zone <- "inshore"
+
+# Merge data into single data layer
+english_waters <- rbind(offshore, inshore)
+
+# add area calculation (km squared)
+english_waters$area_m2 <- st_area(english_waters) %>% set_units(km^2)
+english_waters <- english_waters %>% dplyr::rename(area_km2 = area_m2)
+english_waters$area <- as.numeric(english_waters$area_km2)
+
+rm(inshore, offshore) #frees up a lot of memory
+
+# Data prepared - save enlish_waters as R obj
+saveRDS(english_waters, "./outputs/english_waters_area_calcs.RDS")
+
+# stop here and start plotting and analyses scripts in new file.
+#-------------------------------------
 
 
-rm(fgdb) #frees up a lot of memory
 
 #for spatial  
 #y <- st_drop_zm(fgdb) # drop z dimension from geodatabase
 #z <- as(y, "Spatial")
 
 #to allow for easy editing, convert to char
-hab.type.dat$HAB_TYPE <- as.character(hab.type.dat$HAB_TYPE) # convert hab_type to character
+#english_waters$HAB_TYPE <- as.character(english_waters$HAB_TYPE) # convert hab_type to character
 
+
+
+#-------------------
+#OLDER CODE - I THINK YOU CAN REDO THIs a LOt EASIER WITH THE NEW DATA
 #clean data
 
 hab.type.dat$HAB_TYPE <- gsub(" or ", "/", hab.type.dat$HAB_TYPE) # replace ; with / to make consistent
