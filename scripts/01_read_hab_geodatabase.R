@@ -36,6 +36,7 @@ english_waters <- rbind(offshore, inshore)
 english_waters$area_m2 <- st_area(english_waters) %>% set_units(km^2)
 english_waters <- english_waters %>% dplyr::rename(area_km2 = area_m2)
 english_waters$area <- as.numeric(english_waters$area_km2)
+english_waters$level <- as.integer(english_waters$level)
 
 rm(inshore, offshore) #frees up a lot of memory
 
