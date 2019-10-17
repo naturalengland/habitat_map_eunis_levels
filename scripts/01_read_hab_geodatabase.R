@@ -1,13 +1,14 @@
 library(sf)
-library(sp)
+#library(sp)
 library(tidyverse)
 library(data.table)
 library(cowplot)
 library(units)
 
 
-# Define gis input for habitat map(s)
-input_habitat_map <- "F:\\projects\\offshore_sensitivity\\marine_offshore_sensitivity\\outputs\\habitat_sensitivity_fishing_sbgr_no_biotope_filter.GPKG"
+# Define gis input directory/geopackage for habitat map(s)
+input_habitat_map <- "F:/projects/marine_biotope_sensitivity/outputs/habitat_sensitivity_fishing_mosaic_unfiltered.gpkg" 
+#or habitat_sensitivity_fishing_multiple_sbgr_mosaic.gpkg
 #GIS data for output non-sbgr filter - as it contains habitat info and should be correct otherwise for this calculation: "F:\\projects\\offshore_sensitivity\\marine_offshore_sensitivity\\outputs\\habitat_sensitivity_fishing_sbgr_no_biotope_filter.GPKG"
 
 # Run this to see the available layers in the gis file
